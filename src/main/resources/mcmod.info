@@ -1,0 +1,20 @@
+[
+  {
+    "modid": "pills_for_illness",
+    "name": "Pills for illness (PFI)",
+    "description": "A mod that adds a deadly disease to Minecraft",
+    "version": "1.2",
+    "credits": "Special for ModPacks",
+    "logoFile": "assets/pills_for_illness/textures/items/bufferedpill.png",
+    "mcversion": "1.12.2",
+    "url": "https://pa-world.gamer.gd",
+    "updateUrl": "",
+    "authorList": [
+      "Andrew1284prod"
+    ],
+    "dependencies": [],
+    "dependants": [],
+    "requiredMods": [],
+    "useDependencyInformation": "true"
+  }
+]

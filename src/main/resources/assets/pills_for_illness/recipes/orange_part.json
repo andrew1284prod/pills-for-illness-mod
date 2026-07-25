@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {"item": "minecraft:dye","data": 15},
+    {"item": "minecraft:carrot"}
+  ],
+  "result": {
+    "item": "pills_for_illness:orangepart",
+    "count": 4
+  }
+}

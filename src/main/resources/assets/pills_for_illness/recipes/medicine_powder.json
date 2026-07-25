@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {"item": "minecraft:dye","data": 15},
+    {"item": "minecraft:coal", "data": 0}
+  ],
+  "result": {
+    "item": "pills_for_illness:medicinepowder",
+    "count": 4
+  }
+}

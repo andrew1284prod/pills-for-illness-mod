@@ -1,0 +1,140 @@
+{
+  "id_map": {},
+  "mod_elements": [
+    {
+      "name": "PillsWhenEat",
+      "type": "procedure",
+      "sortid": 1,
+      "compiles": false,
+      "locked_code": true,
+      "ids": {},
+      "registry_name": "pills_when_eat",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "entity",
+            "type": "entity"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Pills",
+      "type": "food",
+      "sortid": 1,
+      "compiles": true,
+      "locked_code": true,
+      "ids": {},
+      "registry_name": "pills"
+    },
+    {
+      "name": "PillRecept",
+      "type": "recipe",
+      "sortid": 2,
+      "compiles": true,
+      "locked_code": true,
+      "ids": {},
+      "registry_name": "pill_recept"
+    },
+    {
+      "name": "PillsForIllness",
+      "type": "tab",
+      "sortid": 3,
+      "compiles": true,
+      "locked_code": true,
+      "ids": {},
+      "registry_name": "pills_for_illness"
+    },
+    {
+      "name": "EatingPills",
+      "type": "achievement",
+      "sortid": 4,
+      "compiles": true,
+      "locked_code": true,
+      "ids": {},
+      "registry_name": "eating_pills"
+    },
+    {
+      "name": "EatPillsAdvance",
+      "type": "achievement",
+      "sortid": 5,
+      "compiles": true,
+      "locked_code": true,
+      "ids": {},
+      "registry_name": "eat_pills_advance"
+    },
+    {
+      "name": "VirusCycle",
+      "type": "procedure",
+      "sortid": 6,
+      "compiles": false,
+      "locked_code": true,
+      "ids": {},
+      "registry_name": "virus_cycle",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "entity",
+            "type": "entity"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ]
+      }
+    }
+  ],
+  "variable_elements": [
+    {
+      "name": "virus_timer",
+      "type": "number",
+      "scope": "player_persistent",
+      "value": "0.0"
+    }
+  ],
+  "sound_elements": [],
+  "language_map": {
+    "ru_ru": {
+      "advancements.eat_pills_advance.descr": "I am not sure that this is a good medicine.",
+      "advancements.eat_pills_advance.title": "A Dose from... Yourself",
+      "advancements.eating_pills.title": "Pills!",
+      "itemGroup.tabpills_for_illness": "PFI",
+      "advancements.eating_pills.descr": "Craft pills.",
+      "item.pills.name": "Таблетки"
+    },
+    "en_us": {
+      "advancements.eat_pills_advance.descr": "I am not sure that this is a good medicine.",
+      "advancements.eat_pills_advance.title": "A Dose from... Yourself",
+      "advancements.eating_pills.title": "Pills!",
+      "itemGroup.tabpills_for_illness": "PFI",
+      "advancements.eating_pills.descr": "Craft pills.",
+      "item.pills.name": "Pills"
+    }
+  },
+  "foldersRoot": {
+    "name": "~",
+    "children": []
+  },
+  "workspaceSettings": {
+    "modid": "pills_for_illness",
+    "modName": "Pills for illness (PFI)",
+    "version": "1.0",
+    "description": "This mod was created to support the lore of the PA-World modpack.",
+    "author": "Andrew1284prod",
+    "websiteURL": "https://pa-world.gamer.gd",
+    "license": "GNU General Public License version 3 (GPLv3)",
+    "disableForgeVersionCheck": true,
+    "serverSideOnly": false,
+    "modPicture": "virus",
+    "requiredMods": [],
+    "dependencies": [],
+    "dependants": [],
+    "mcreatorDependencies": [],
+    "currentGenerator": "forge-1.12.2",
+    "credits": "Special for PA-World ModPack",
+    "modElementsPackage": "net.mcreator.pills_for_illness",
+    "lockBaseModFiles": false
+  },
+  "mcreatorVersion": 202100118117
+}

@@ -1,0 +1,25 @@
+# Gradle & Build artifacts
+.gradle/
+build/
+out/
+bin/
+
+# Run directories (клиент, сервер, логи, миры)
+run/
+logs/
+saves/
+crash-reports/
+
+# IDE settings (IntelliJ IDEA, Eclipse, VS Code)
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.vscode/
+
+# OS specific
+.DS_Store
+Thumbs.db

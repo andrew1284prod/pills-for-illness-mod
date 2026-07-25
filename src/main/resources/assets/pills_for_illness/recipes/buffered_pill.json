@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "pills_for_illness:whitepart"
+    },
+    {
+      "item": "pills_for_illness:orangepart"
+    },
+    {
+      "item": "pills_for_illness:medicinepowder"
+    },
+    {
+      "item": "pills_for_illness:neutralizer"
+    }
+  ],
+  "result": {
+    "item": "pills_for_illness:bufferedpill",
+    "count": 1
+  }
+}

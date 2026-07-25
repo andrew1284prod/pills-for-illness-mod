@@ -1,0 +1,71 @@
+# Items
+item.whitepart.name=White Capsule Half
+item.orangepart.name=Orange Capsule Half
+item.medicinepowder.name=Medicine Powder
+item.pill.name=Pill
+item.bufferedpill.name=Buffered Pill
+item.neutralizer.name=Neutralizer
+
+# Potion Effects
+effect.virus=Virus
+effect.overdose=Overdose
+
+# Messages
+msg.pills.tremor=You feel slightly unwell...
+msg.pills.hard_to_move=It is getting harder to move...
+msg.pills.too_heavy=Your body feels heavy as lead...
+msg.pills.loud_heart=Your heart is beating too loudly...
+msg.pills.dying=The virus is burning you from within...
+msg.pills.too_late=It is too late...
+
+# Command /pfi
+commands.pfi.usage=/pfi <add|current|reset|info>
+commands.pfi.players_only=§cOnly players can use this command.
+commands.pfi.no_permission=§cYou do not have permission to use this command.
+commands.pfi.error_no_data=§cError: Player data not found.
+commands.pfi.invalid_number=§cInvalid number: %s
+commands.pfi.unknown_subcommand=§cUnknown subcommand. Use: add, current, reset, info
+commands.pfi.add.usage=§eUsage: /pfi add <number>
+commands.pfi.add.success=§aTimer increased by %s ticks. Current value: %s ticks (%s min %s sec)
+commands.pfi.current.success=§aCurrent virus timer: %s ticks (%s min %s sec)
+commands.pfi.reset.success=§aVirus timer has been reset.
+commands.pfi.info.header=§6=== Virus Information ===
+commands.pfi.info.stage1=§e30 min (36000 ticks): Mining Fatigue I
+commands.pfi.info.stage2=§e40 min (48000 ticks): Mining Fatigue I, Slowness I
+commands.pfi.info.stage3=§e50 min (60000 ticks): Mining Fatigue I, Slowness I, Weakness I
+commands.pfi.info.stage4=§e60 min (72000 ticks): Mining Fatigue II, Slowness II, Weakness II
+commands.pfi.info.stage5=§e70 min (84000 ticks): Mining Fatigue III, Slowness III, Weakness III, Poison I
+commands.pfi.info.stage6=§e71 min (85200 ticks): +Nausea IV, Blindness IV
+commands.pfi.info.death=§c72 min (86400 ticks): DEATH
+commands.pfi.info.overdose_header=§6=== Overdose ===
+commands.pfi.info.overdose1=§eLevel I: 60 sec, Weakness I (20%% permadeath chance on death)
+commands.pfi.info.overdose2=§eLevel II: 120 sec, Weakness I, Slowness II (40%% chance)
+commands.pfi.info.overdose3=§eLevel III: 180 sec, Nausea, Weakness II, Slowness III (60%% chance)
+commands.pfi.info.overdose4=§cLevel IV: Instant death (100%% permadeath)
+
+# Configs
+config.pills_for_illness.title=Pills for Illness Settings
+config.pills_for_illness.virus=Virus Settings
+config.pills_for_illness.virus.resetOnDeath=Reset virus on death
+config.pills_for_illness.virus.deathDamage=Virus death damage
+config.pills_for_illness.virus.thresholds=Virus stage thresholds (in ticks)
+
+config.pills_for_illness.overdose=Overdose Settings
+config.pills_for_illness.overdose.enable=Enable overdose
+config.pills_for_illness.overdose.maxLevel=Maximum overdose level
+config.pills_for_illness.overdose.deathDamage=Overdose death damage
+config.pills_for_illness.overdose.durations=Overdose durations per level
+config.pills_for_illness.overdose.deathChances=Permadeath chances on overdose death
+
+config.pills_for_illness.pill=Pill Settings
+config.pills_for_illness.pill.healAmount=Regular pill heal amount (ticks)
+config.pills_for_illness.pill.bufferedHealAmount=Buffered pill heal amount (ticks)
+
+config.pills_for_illness.permadeath=Permadeath Settings
+config.pills_for_illness.permadeath.enable=Enable permadeath
+
+config.pills_for_illness.drop=Drop Settings
+config.pills_for_illness.drop.neutralizerChance1=Chance to drop 1 neutralizer (0.05 = 5%%)
+config.pills_for_illness.drop.neutralizerChance2=Chance to drop 2 neutralizers (0.02 = 2%%)
+config.pills_for_illness.drop.cancelCobblestone=Cancel cobblestone drop
+config.pills_for_illness.drop.powderChance=Medicine powder drop chance from iron ore (0.50 = 50%%)
