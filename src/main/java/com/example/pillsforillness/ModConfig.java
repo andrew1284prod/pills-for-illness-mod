@@ -10,6 +10,15 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 @Config.LangKey("config.pills_for_illness.title")
 public class ModConfig {
 
+    public enum SystemMode {
+        ALWAYS_ON,
+        ASK
+    }
+
+    @Name("general settings")
+    @LangKey("config.pills_for_illness.general")
+    public static GeneralCategory generalSettings = new GeneralCategory();
+
     @Name("virus settings")
     @LangKey("config.pills_for_illness.virus")
     public static VirusCategory virusSettings = new VirusCategory();
@@ -22,6 +31,10 @@ public class ModConfig {
     @LangKey("config.pills_for_illness.pill")
     public static PillCategory pillSettings = new PillCategory();
 
+    @Name("monitor settings")
+    @LangKey("config.pills_for_illness.monitor")
+    public static MonitorCategory monitorSettings = new MonitorCategory();
+
     @Name("permadeath settings")
     @LangKey("config.pills_for_illness.permadeath")
     public static PermadeathCategory permadeathSettings = new PermadeathCategory();
@@ -29,6 +42,12 @@ public class ModConfig {
     @Name("drop settings")
     @LangKey("config.pills_for_illness.drop")
     public static DropCategory dropSettings = new DropCategory();
+
+    public static class GeneralCategory {
+        @Comment({"Режим работы системы при создании мира.", "ALWAYS_ON - Всегда включена, кнопка скрыта.", "ASK - Показывать тумблер в меню создания мира."})
+        @LangKey("config.pills_for_illness.general.systemMode")
+        public SystemMode systemMode = SystemMode.ASK;
+    }
 
     public static class VirusCategory {
         @LangKey("config.pills_for_illness.virus.resetOnDeath")
@@ -38,7 +57,7 @@ public class ModConfig {
         public float virusDeathDamage = 1000.0F;
 
         @LangKey("config.pills_for_illness.virus.thresholds")
-        public int[] virusStageThresholds = {36000, 48000, 60000, 72000, 84000, 85200};
+        public int[] virusStageThresholds = {44000, 56000, 72000, 86000, 96000, 100000};
     }
 
     public static class OverdoseCategory {
@@ -62,11 +81,34 @@ public class ModConfig {
     public static class PillCategory {
         @RangeInt(min = 0, max = 240000)
         @LangKey("config.pills_for_illness.pill.healAmount")
-        public int pillHealAmount = 18000;
+        public int pillHealAmount = 24000;
 
         @RangeInt(min = 0, max = 240000)
         @LangKey("config.pills_for_illness.pill.bufferedHealAmount")
         public int bufferedPillHealAmount = 10000;
+
+        @RangeInt(min = 0, max = 72000)
+        @LangKey("config.pills_for_illness.pill.pillCooldown")
+        public int pillCooldown = 60;
+
+        @RangeInt(min = 0, max = 72000)
+        @LangKey("config.pills_for_illness.pill.bufferedPillCooldown")
+        public int bufferedPillCooldown = 0;
+    }
+
+    public static class MonitorCategory {
+        @LangKey("config.pills_for_illness.monitor.enable")
+        public boolean enableMedicalMonitor = true;
+
+        @RangeInt(min = 0, max = 72000)
+        @LangKey("config.pills_for_illness.monitor.cooldown")
+        public int monitorCooldown = 200;
+
+        @LangKey("config.pills_for_illness.monitor.dropDamage")
+        public float monitorDropDamage = 3.0F;
+
+        @LangKey("config.pills_for_illness.monitor.useDamage")
+        public float monitorUseDamage = 1.0F;
     }
 
     public static class PermadeathCategory {
@@ -77,18 +119,21 @@ public class ModConfig {
     public static class DropCategory {
         @RangeDouble(min = 0.0, max = 1.0)
         @LangKey("config.pills_for_illness.drop.neutralizerChance1")
-        public double neutralizerChance1 = 0.05; // 5%
+        public double neutralizerChance1 = 0.02;
 
         @RangeDouble(min = 0.0, max = 1.0)
         @LangKey("config.pills_for_illness.drop.neutralizerChance2")
-        public double neutralizerChance2 = 0.02; // 2%
+        public double neutralizerChance2 = 0.005;
 
         @LangKey("config.pills_for_illness.drop.cancelCobblestone")
         public boolean cancelCobblestoneDrop = true;
 
         @RangeDouble(min = 0.0, max = 1.0)
         @LangKey("config.pills_for_illness.drop.powderChance")
-        public double medicinePowderChance = 0.50; // 50%
+        public double medicinePowderChance = 0.20;
+
+        @LangKey("config.pills_for_illness.drop.guaranteeCarrotDrop")
+        public boolean guaranteeCarrotDrop = true;
     }
 
     @Mod.EventBusSubscriber(modid = PillsForIllnessMod.MODID)

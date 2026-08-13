@@ -22,7 +22,7 @@ public class PlayerTimer implements IPlayerTimer {
 
     @Override
     public void tick(World world, EntityPlayer player) {
-        if (world.isRemote) return;
+        if (world.isRemote || !PfiWorldData.get(world).isSystemEnabled()) return;
         timer++;
 
         PotionEffect virusEffect = player.getActivePotionEffect(ModPotions.VIRUS);
@@ -65,6 +65,7 @@ public class PlayerTimer implements IPlayerTimer {
 
     @Override
     public void onPillTaken(World world, EntityPlayer player) {
+        if (!PfiWorldData.get(world).isSystemEnabled()) return;
         long worldTime = world.getTotalWorldTime();
 
         ModPotions.allowVirusRemoval = true;
@@ -112,6 +113,7 @@ public class PlayerTimer implements IPlayerTimer {
 
     @Override
     public void onBufferedPillTaken(World world, EntityPlayer player) {
+        if (!PfiWorldData.get(world).isSystemEnabled()) return;
         long worldTime = world.getTotalWorldTime();
 
         ModPotions.allowVirusRemoval = true;
@@ -134,7 +136,6 @@ public class PlayerTimer implements IPlayerTimer {
             }
         }
 
-        // Никакого воздействия на Овердоз (не снимает и не накладывает)
         lastPillTakenWorldTime = worldTime;
     }
 

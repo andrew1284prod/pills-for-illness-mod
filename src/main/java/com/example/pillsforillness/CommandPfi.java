@@ -30,11 +30,6 @@ public class CommandPfi extends CommandBase {
     }
 
     @Override
-    public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return true;
-    }
-
-    @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         if (!(sender instanceof EntityPlayerMP)) {
             sender.sendMessage(new TextComponentTranslation("commands.pfi.players_only"));
@@ -42,11 +37,6 @@ public class CommandPfi extends CommandBase {
         }
 
         EntityPlayerMP player = (EntityPlayerMP) sender;
-
-        if (!player.canUseCommand(2, "pfi")) {
-            sender.sendMessage(new TextComponentTranslation("commands.pfi.no_permission"));
-            return;
-        }
 
         IPlayerTimer timer = player.getCapability(CapabilityPlayerTimer.TIMER_CAP, null);
         if (timer == null) {
@@ -67,8 +57,7 @@ public class CommandPfi extends CommandBase {
                 }
                 try {
                     long addTicks = Long.parseLong(args[1]);
-                    long newTimer = timer.getTimer() + addTicks;
-                    if (newTimer < 0) newTimer = 0;
+                    long newTimer = Math.max(0, timer.getTimer() + addTicks);
                     timer.setTimer(newTimer);
                     long sec = newTimer / 20;
                     sender.sendMessage(new TextComponentTranslation("commands.pfi.add.success", addTicks, newTimer, (sec / 60), (sec % 60)));
@@ -91,19 +80,14 @@ public class CommandPfi extends CommandBase {
                 break;
 
             case "info":
-                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.header"));
-                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.stage1"));
-                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.stage2"));
-                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.stage3"));
-                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.stage4"));
-                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.stage5"));
-                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.stage6"));
+                for (int i = 1; i <= 6; i++) {
+                    sender.sendMessage(new TextComponentTranslation("commands.pfi.info.stage" + i));
+                }
                 sender.sendMessage(new TextComponentTranslation("commands.pfi.info.death"));
                 sender.sendMessage(new TextComponentTranslation("commands.pfi.info.overdose_header"));
-                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.overdose1"));
-                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.overdose2"));
-                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.overdose3"));
-                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.overdose4"));
+                for (int i = 1; i <= 4; i++) {
+                    sender.sendMessage(new TextComponentTranslation("commands.pfi.info.overdose" + i));
+                }
                 break;
 
             default:

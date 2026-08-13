@@ -1,0 +1,1767 @@
+[ClientProxy.java]:
+package com.example.pillsforillness;
+
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+
+public class ClientProxy extends CommonProxy {
+    @Override
+    public void preInit() {
+        super.preInit();
+        ModPotions.initClient(); // <-- ОБЯЗАТЕЛЬНО!
+        // Если есть регистрация моделей предметов – здесь
+    }
+}
+
+
+--------------------------------------------------
+
+[ModelRegistry.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.item.Item;
+import net.minecraftforge.client.event.ModelRegistryEvent;
+import net.minecraftforge.client.model.ModelLoader;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.Side;
+
+@Mod.EventBusSubscriber(modid = PillsForIllnessMod.MODID, value = Side.CLIENT)
+public class ModelRegistry {
+    @SubscribeEvent
+    public static void registerModels(ModelRegistryEvent event) {
+        registerModel(ModItems.WHITE_PART);
+        registerModel(ModItems.ORANGE_PART);
+        registerModel(ModItems.MEDICINE_POWDER);
+        registerModel(ModItems.PILL);
+        registerModel(ModItems.BUFFERED_PILL);
+        registerModel(ModItems.NEUTRALIZER);
+        registerModel(ModItems.MEDICAL_MONITOR); // <-- ДОБАВЛЕНО
+    }
+
+    private static void registerModel(Item item) {
+        if (item == null) return;
+        ModelLoader.setCustomModelResourceLocation(
+            item,
+            0,
+            new ModelResourceLocation(item.getRegistryName(), "inventory")
+        );
+    }
+}
+
+
+--------------------------------------------------
+
+[CapabilityPlayerTimer.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumFacing;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.CapabilityInject;
+import net.minecraftforge.common.capabilities.ICapabilitySerializable;
+
+public class CapabilityPlayerTimer {
+    @CapabilityInject(IPlayerTimer.class)
+    public static final Capability<IPlayerTimer> TIMER_CAP = null;
+
+    public static class Provider implements ICapabilitySerializable<NBTTagCompound> {
+        private final IPlayerTimer instance = new PlayerTimer();
+        private final PlayerTimerStorage storage = new PlayerTimerStorage();
+
+        @Override
+        public boolean hasCapability(Capability<?> capability, EnumFacing facing) {
+            return capability == TIMER_CAP;
+        }
+
+        @Override
+        public <T> T getCapability(Capability<T> capability, EnumFacing facing) {
+            return capability == TIMER_CAP ? TIMER_CAP.cast(instance) : null;
+        }
+
+        @Override
+        public NBTTagCompound serializeNBT() {
+            return (NBTTagCompound) storage.writeNBT(TIMER_CAP, instance, null);
+        }
+
+        @Override
+        public void deserializeNBT(NBTTagCompound nbt) {
+            storage.readNBT(TIMER_CAP, instance, null, nbt);
+        }
+    }
+}
+
+
+--------------------------------------------------
+
+[PlayerTimerStorage.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumFacing;
+import net.minecraftforge.common.capabilities.Capability;
+
+public class PlayerTimerStorage implements Capability.IStorage<IPlayerTimer> {
+    @Override
+    public NBTBase writeNBT(Capability<IPlayerTimer> capability, IPlayerTimer instance, EnumFacing side) {
+        NBTTagCompound tag = new NBTTagCompound();
+        tag.setLong("timer", instance.getTimer());
+        tag.setLong("lastPillTime", instance.getLastPillTime());
+        tag.setBoolean("permaDead", instance.isPermaDead());
+        return tag;
+    }
+
+    @Override
+    public void readNBT(Capability<IPlayerTimer> capability, IPlayerTimer instance, EnumFacing side, NBTBase nbt) {
+        NBTTagCompound tag = (NBTTagCompound) nbt;
+        instance.setTimer(tag.getLong("timer"));
+        instance.setLastPillTime(tag.getLong("lastPillTime"));
+        instance.setPermaDead(tag.getBoolean("permaDead"));
+    }
+}
+
+
+--------------------------------------------------
+
+[ModConfig.java]:
+package com.example.pillsforillness;
+
+import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.Config.*;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+@Config(modid = PillsForIllnessMod.MODID, name = "pills-for-illness")
+@Config.LangKey("config.pills_for_illness.title")
+public class ModConfig {
+
+    public enum SystemMode {
+        ALWAYS_ON,
+        ASK
+    }
+
+    @Name("general settings")
+    @LangKey("config.pills_for_illness.general")
+    public static GeneralCategory generalSettings = new GeneralCategory();
+
+    @Name("virus settings")
+    @LangKey("config.pills_for_illness.virus")
+    public static VirusCategory virusSettings = new VirusCategory();
+
+    @Name("overdose settings")
+    @LangKey("config.pills_for_illness.overdose")
+    public static OverdoseCategory overdoseSettings = new OverdoseCategory();
+
+    @Name("pill settings")
+    @LangKey("config.pills_for_illness.pill")
+    public static PillCategory pillSettings = new PillCategory();
+
+    @Name("monitor settings")
+    @LangKey("config.pills_for_illness.monitor")
+    public static MonitorCategory monitorSettings = new MonitorCategory();
+
+    @Name("permadeath settings")
+    @LangKey("config.pills_for_illness.permadeath")
+    public static PermadeathCategory permadeathSettings = new PermadeathCategory();
+
+    @Name("drop settings")
+    @LangKey("config.pills_for_illness.drop")
+    public static DropCategory dropSettings = new DropCategory();
+
+    public static class GeneralCategory {
+        @Comment({"Режим работы системы при создании мира.", "ALWAYS_ON - Всегда включена, кнопка скрыта.", "ASK - Показывать тумблер в меню создания мира."})
+        @LangKey("config.pills_for_illness.general.systemMode")
+        public SystemMode systemMode = SystemMode.ASK;
+    }
+
+    public static class VirusCategory {
+        @LangKey("config.pills_for_illness.virus.resetOnDeath")
+        public boolean resetVirusOnDeath = false;
+
+        @LangKey("config.pills_for_illness.virus.deathDamage")
+        public float virusDeathDamage = 1000.0F;
+
+        @LangKey("config.pills_for_illness.virus.thresholds")
+        public int[] virusStageThresholds = {44000, 56000, 72000, 86000, 96000, 100000};
+    }
+
+    public static class OverdoseCategory {
+        @LangKey("config.pills_for_illness.overdose.enable")
+        public boolean enableOverdose = true;
+
+        @RangeInt(min = 1, max = 10)
+        @LangKey("config.pills_for_illness.overdose.maxLevel")
+        public int maxOverdoseLevel = 3;
+
+        @LangKey("config.pills_for_illness.overdose.deathDamage")
+        public float overdoseDeathDamage = 1000.0F;
+
+        @LangKey("config.pills_for_illness.overdose.durations")
+        public int[] overdoseDurations = {1200, 2400, 3600};
+
+        @LangKey("config.pills_for_illness.overdose.deathChances")
+        public double[] overdoseDeathChances = {0.2, 0.4, 0.6};
+    }
+
+    public static class PillCategory {
+        @RangeInt(min = 0, max = 240000)
+        @LangKey("config.pills_for_illness.pill.healAmount")
+        public int pillHealAmount = 24000;
+
+        @RangeInt(min = 0, max = 240000)
+        @LangKey("config.pills_for_illness.pill.bufferedHealAmount")
+        public int bufferedPillHealAmount = 10000;
+
+        @RangeInt(min = 0, max = 72000)
+        @LangKey("config.pills_for_illness.pill.pillCooldown")
+        public int pillCooldown = 60;
+
+        @RangeInt(min = 0, max = 72000)
+        @LangKey("config.pills_for_illness.pill.bufferedPillCooldown")
+        public int bufferedPillCooldown = 0;
+    }
+
+    public static class MonitorCategory {
+        @LangKey("config.pills_for_illness.monitor.enable")
+        public boolean enableMedicalMonitor = true;
+
+        @RangeInt(min = 0, max = 72000)
+        @LangKey("config.pills_for_illness.monitor.cooldown")
+        public int monitorCooldown = 200;
+
+        @LangKey("config.pills_for_illness.monitor.dropDamage")
+        public float monitorDropDamage = 3.0F;
+
+        @LangKey("config.pills_for_illness.monitor.useDamage")
+        public float monitorUseDamage = 1.0F;
+    }
+
+    public static class PermadeathCategory {
+        @LangKey("config.pills_for_illness.permadeath.enable")
+        public boolean enablePermadeath = true;
+    }
+
+    public static class DropCategory {
+        @RangeDouble(min = 0.0, max = 1.0)
+        @LangKey("config.pills_for_illness.drop.neutralizerChance1")
+        public double neutralizerChance1 = 0.02;
+
+        @RangeDouble(min = 0.0, max = 1.0)
+        @LangKey("config.pills_for_illness.drop.neutralizerChance2")
+        public double neutralizerChance2 = 0.005;
+
+        @LangKey("config.pills_for_illness.drop.cancelCobblestone")
+        public boolean cancelCobblestoneDrop = true;
+
+        @RangeDouble(min = 0.0, max = 1.0)
+        @LangKey("config.pills_for_illness.drop.powderChance")
+        public double medicinePowderChance = 0.20;
+
+        @LangKey("config.pills_for_illness.drop.guaranteeCarrotDrop")
+        public boolean guaranteeCarrotDrop = true;
+    }
+
+    @Mod.EventBusSubscriber(modid = PillsForIllnessMod.MODID)
+    public static class ConfigSyncHandler {
+        @SubscribeEvent
+        public static void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
+            if (event.getModID().equals(PillsForIllnessMod.MODID)) {
+                net.minecraftforge.common.config.ConfigManager.sync(PillsForIllnessMod.MODID, Config.Type.INSTANCE);
+            }
+        }
+    }
+}
+
+
+--------------------------------------------------
+
+[PlayerPlacedBlocksData.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.world.storage.WorldSavedData;
+
+import java.util.HashSet;
+import java.util.Set;
+
+public class PlayerPlacedBlocksData extends WorldSavedData {
+    private static final String DATA_NAME = PillsForIllnessMod.MODID + "_placed_blocks";
+    private final Set<BlockPos> placedBlocks = new HashSet<>();
+
+    public PlayerPlacedBlocksData() {
+        super(DATA_NAME);
+    }
+
+    public PlayerPlacedBlocksData(String name) {
+        super(name);
+    }
+
+    public static PlayerPlacedBlocksData get(World world) {
+        PlayerPlacedBlocksData instance = (PlayerPlacedBlocksData) world.getPerWorldStorage().getOrLoadData(PlayerPlacedBlocksData.class, DATA_NAME);
+        if (instance == null) {
+            instance = new PlayerPlacedBlocksData();
+            world.getPerWorldStorage().setData(DATA_NAME, instance);
+        }
+        return instance;
+    }
+
+    public void addPlacedBlock(BlockPos pos) {
+        placedBlocks.add(pos.toImmutable());
+        markDirty();
+    }
+
+    public boolean isPlacedByPlayer(BlockPos pos) {
+        return placedBlocks.contains(pos);
+    }
+
+    public void removePlacedBlock(BlockPos pos) {
+        if (placedBlocks.remove(pos)) {
+            markDirty();
+        }
+    }
+
+    @Override
+    public void readFromNBT(NBTTagCompound nbt) {
+        placedBlocks.clear();
+        NBTTagList list = nbt.getTagList("blocks", 10);
+        for (int i = 0; i < list.tagCount(); i++) {
+            NBTTagCompound tag = list.getCompoundTagAt(i);
+            placedBlocks.add(new BlockPos(tag.getInteger("x"), tag.getInteger("y"), tag.getInteger("z")));
+        }
+    }
+
+    @Override
+    public NBTTagCompound writeToNBT(NBTTagCompound compound) {
+        NBTTagList list = new NBTTagList();
+        for (BlockPos pos : placedBlocks) {
+            NBTTagCompound tag = new NBTTagCompound();
+            tag.setInteger("x", pos.getX());
+            tag.setInteger("y", pos.getY());
+            tag.setInteger("z", pos.getZ());
+            list.appendTag(tag);
+        }
+        compound.setTag("blocks", list);
+        return compound;
+    }
+}
+
+
+--------------------------------------------------
+
+[IPlayerTimer.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.World;
+
+public interface IPlayerTimer {
+    long getTimer();
+    void setTimer(long ticks);
+    long getLastPillTime();
+    void setLastPillTime(long time);
+    boolean isPermaDead();
+    void setPermaDead(boolean dead);
+
+    void tick(World world, EntityPlayer player);
+    void onPillTaken(World world, EntityPlayer player);
+    void onBufferedPillTaken(World world, EntityPlayer player);
+}
+
+
+--------------------------------------------------
+
+[BufferedPillItem.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemFood;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+import javax.annotation.Nullable;
+import java.util.List;
+
+public class BufferedPillItem extends ItemFood {
+    public BufferedPillItem() {
+        super(0, 0, false);
+        setAlwaysEdible();
+        setCreativeTab(ModCreativeTabs.TAB_PILLS);
+    }
+
+    @Override
+    protected void onFoodEaten(ItemStack stack, World worldIn, EntityPlayer player) {
+        if (!worldIn.isRemote) {
+            IPlayerTimer timer = player.getCapability(CapabilityPlayerTimer.TIMER_CAP, null);
+            if (timer != null) {
+                timer.onBufferedPillTaken(worldIn, player);
+            }
+        }
+
+        if (ModConfig.pillSettings.bufferedPillCooldown > 0) {
+            player.getCooldownTracker().setCooldown(this, ModConfig.pillSettings.bufferedPillCooldown);
+        }
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
+        String key = getUnlocalizedName(stack) + ".tooltip";
+        if (I18n.hasKey(key)) {
+            tooltip.add(TextFormatting.ITALIC + I18n.format(key));
+        }
+    }
+}
+
+
+--------------------------------------------------
+
+[MedicalMonitorItem.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+import javax.annotation.Nullable;
+import java.util.List;
+
+public class MedicalMonitorItem extends Item {
+    public MedicalMonitorItem() {
+        super();
+        setMaxStackSize(1);
+        setCreativeTab(ModCreativeTabs.TAB_PILLS);
+    }
+
+    @Override
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
+        ItemStack stack = playerIn.getHeldItem(handIn);
+
+        if (!ModConfig.monitorSettings.enableMedicalMonitor) {
+            return new ActionResult<>(EnumActionResult.FAIL, stack);
+        }
+
+        if (!worldIn.isRemote) {
+            float damage = ModConfig.monitorSettings.monitorUseDamage;
+            if (damage > 0.0F) {
+                playerIn.attackEntityFrom(DamageSource.MAGIC, damage);
+            }
+
+            IPlayerTimer timer = playerIn.getCapability(CapabilityPlayerTimer.TIMER_CAP, null);
+            if (timer != null) {
+                long currentTicks = timer.getTimer();
+                int[] thresholds = ModConfig.virusSettings.virusStageThresholds;
+
+                int maxTicks = 85200;
+                if (thresholds != null && thresholds.length > 0) {
+                    maxTicks = thresholds[thresholds.length - 1];
+                }
+
+                double percentage = maxTicks > 0 ? Math.min(100.0, Math.max(0.0, ((double) currentTicks / maxTicks) * 100.0)) : 0.0;
+                String formattedPercentage = String.format("%.1f", percentage);
+
+                playerIn.sendMessage(new TextComponentTranslation("msg.pills.monitor_status", formattedPercentage));
+            }
+        }
+
+        if (ModConfig.monitorSettings.monitorCooldown > 0) {
+            playerIn.getCooldownTracker().setCooldown(this, ModConfig.monitorSettings.monitorCooldown);
+        }
+
+        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
+        String key = getUnlocalizedName(stack) + ".tooltip";
+        if (I18n.hasKey(key)) {
+            tooltip.add(TextFormatting.ITALIC + I18n.format(key));
+        }
+    }
+}
+
+
+--------------------------------------------------
+
+[WorldCreationGuiHandler.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiCreateWorld;
+import net.minecraft.client.resources.I18n;
+import net.minecraftforge.client.event.GuiScreenEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+@SideOnly(Side.CLIENT)
+@Mod.EventBusSubscriber(modid = PillsForIllnessMod.MODID, value = Side.CLIENT)
+public class WorldCreationGuiHandler {
+    private static final int BUTTON_ID = 99281;
+    public static boolean pendingSystemEnabled = true;
+
+    @SubscribeEvent
+    public static void onInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
+        if (event.getGui() instanceof GuiCreateWorld) {
+            if (ModConfig.generalSettings.systemMode == ModConfig.SystemMode.ASK) {
+                GuiCreateWorld gui = (GuiCreateWorld) event.getGui();
+
+                int buttonWidth = 300;
+                int buttonHeight = 20;
+                int buttonX = gui.width / 2 - (buttonWidth / 2);
+                int buttonY = gui.height - 52;
+
+                GuiButton toggleBtn = new GuiButton(
+                    BUTTON_ID,
+                    buttonX,
+                    buttonY,
+                    buttonWidth,
+                    buttonHeight,
+                    getButtonText()
+                );
+
+                event.getButtonList().add(toggleBtn);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onActionPerformed(GuiScreenEvent.ActionPerformedEvent.Post event) {
+        if (event.getGui() instanceof GuiCreateWorld && event.getButton().id == BUTTON_ID) {
+            pendingSystemEnabled = !pendingSystemEnabled;
+            event.getButton().displayString = getButtonText();
+        }
+    }
+
+    private static String getButtonText() {
+        String status = pendingSystemEnabled
+            ? I18n.format("gui.pills_for_illness.enabled")
+            : I18n.format("gui.pills_for_illness.disabled");
+        return I18n.format("gui.pills_for_illness.toggle_button", status);
+    }
+}
+
+
+--------------------------------------------------
+
+[PotionEventHandler.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.potion.Potion;
+import net.minecraftforge.event.entity.living.PotionEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+@Mod.EventBusSubscriber(modid = PillsForIllnessMod.MODID)
+public class PotionEventHandler {
+    @SubscribeEvent
+    public static void onPotionRemove(PotionEvent.PotionRemoveEvent event) {
+        EntityLivingBase entity = event.getEntityLiving();
+        if (entity == null) return;
+        Potion potion = event.getPotion();
+        if (potion == ModPotions.VIRUS && !ModPotions.allowVirusRemoval) {
+            event.setCanceled(true);
+        }
+        if (potion == ModPotions.OVERDOSE && !ModPotions.allowOverdoseRemoval) {
+            event.setCanceled(true);
+        }
+    }
+}
+
+
+--------------------------------------------------
+
+[ModCreativeTabs.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.item.ItemStack;
+
+public class ModCreativeTabs {
+    public static final CreativeTabs TAB_PILLS = new CreativeTabs(PillsForIllnessMod.MODID) {
+        @Override
+        public ItemStack getTabIconItem() {
+            return new ItemStack(ModItems.MEDICAL_MONITOR);
+        }
+    };
+}
+
+
+--------------------------------------------------
+
+[CommandPfi.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentTranslation;
+
+import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.List;
+
+public class CommandPfi extends CommandBase {
+
+    @Override
+    public String getName() {
+        return "pfi";
+    }
+
+    @Override
+    public String getUsage(ICommandSender sender) {
+        return "commands.pfi.usage";
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+        return 2;
+    }
+
+    @Override
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+        if (!(sender instanceof EntityPlayerMP)) {
+            sender.sendMessage(new TextComponentTranslation("commands.pfi.players_only"));
+            return;
+        }
+
+        EntityPlayerMP player = (EntityPlayerMP) sender;
+
+        IPlayerTimer timer = player.getCapability(CapabilityPlayerTimer.TIMER_CAP, null);
+        if (timer == null) {
+            sender.sendMessage(new TextComponentTranslation("commands.pfi.error_no_data"));
+            return;
+        }
+
+        if (args.length == 0) {
+            sender.sendMessage(new TextComponentTranslation("commands.pfi.usage"));
+            return;
+        }
+
+        switch (args[0].toLowerCase()) {
+            case "add":
+                if (args.length < 2) {
+                    sender.sendMessage(new TextComponentTranslation("commands.pfi.add.usage"));
+                    return;
+                }
+                try {
+                    long addTicks = Long.parseLong(args[1]);
+                    long newTimer = Math.max(0, timer.getTimer() + addTicks);
+                    timer.setTimer(newTimer);
+                    long sec = newTimer / 20;
+                    sender.sendMessage(new TextComponentTranslation("commands.pfi.add.success", addTicks, newTimer, (sec / 60), (sec % 60)));
+                } catch (NumberFormatException e) {
+                    sender.sendMessage(new TextComponentTranslation("commands.pfi.invalid_number", args[1]));
+                }
+                break;
+
+            case "current":
+                long ticks = timer.getTimer();
+                long seconds = ticks / 20;
+                long minutes = seconds / 60;
+                sender.sendMessage(new TextComponentTranslation("commands.pfi.current.success", ticks, minutes, (seconds % 60)));
+                break;
+
+            case "reset":
+                timer.setTimer(0);
+                timer.setLastPillTime(0);
+                sender.sendMessage(new TextComponentTranslation("commands.pfi.reset.success"));
+                break;
+
+            case "info":
+                for (int i = 1; i <= 6; i++) {
+                    sender.sendMessage(new TextComponentTranslation("commands.pfi.info.stage" + i));
+                }
+                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.death"));
+                sender.sendMessage(new TextComponentTranslation("commands.pfi.info.overdose_header"));
+                for (int i = 1; i <= 4; i++) {
+                    sender.sendMessage(new TextComponentTranslation("commands.pfi.info.overdose" + i));
+                }
+                break;
+
+            default:
+                sender.sendMessage(new TextComponentTranslation("commands.pfi.unknown_subcommand"));
+                break;
+        }
+    }
+
+    @Override
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
+        if (args.length == 1) {
+            return getListOfStringsMatchingLastWord(args, "add", "current", "reset", "info");
+        }
+        return Collections.emptyList();
+    }
+}
+
+
+--------------------------------------------------
+
+[PillItem.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemFood;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+import javax.annotation.Nullable;
+import java.util.List;
+
+public class PillItem extends ItemFood {
+    public PillItem() {
+        super(0, 0, false);
+        setAlwaysEdible();
+        setCreativeTab(ModCreativeTabs.TAB_PILLS);
+    }
+
+    @Override
+    protected void onFoodEaten(ItemStack stack, World worldIn, EntityPlayer player) {
+        if (!worldIn.isRemote) {
+            IPlayerTimer timer = player.getCapability(CapabilityPlayerTimer.TIMER_CAP, null);
+            if (timer != null) {
+                timer.onPillTaken(worldIn, player);
+            }
+        }
+
+        if (ModConfig.pillSettings.pillCooldown > 0) {
+            player.getCooldownTracker().setCooldown(this, ModConfig.pillSettings.pillCooldown);
+        }
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
+        String key = getUnlocalizedName(stack) + ".tooltip";
+        if (I18n.hasKey(key)) {
+            tooltip.add(TextFormatting.ITALIC + I18n.format(key));
+        }
+    }
+}
+
+
+--------------------------------------------------
+
+[PotionVirus.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+public class PotionVirus extends Potion {
+    private static final ResourceLocation ICON = new ResourceLocation(PillsForIllnessMod.MODID, "textures/gui/virus.png");
+
+    public PotionVirus() {
+        super(true, 0x00FF00);
+        setPotionName("effect.virus");
+        setRegistryName("virus");
+        // Без setIconIndex
+    }
+
+    @Override
+    public boolean hasStatusIcon() {
+        return false;
+    }
+
+    @Override
+    public boolean isReady(int duration, int amplifier) {
+        return true;
+    }
+
+    @Override
+    public void performEffect(EntityLivingBase entity, int amplifier) {
+        int duration = 20;
+        if (amplifier >= 0) {
+            entity.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.MINING_FATIGUE, duration, 0, true, false));
+        }
+        if (amplifier >= 1) {
+            entity.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.SLOWNESS, duration, 0, true, false));
+        }
+        if (amplifier >= 2) {
+            entity.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.WEAKNESS, duration, 0, true, false));
+        }
+        if (amplifier >= 3) {
+            entity.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.MINING_FATIGUE, duration, 1, true, false));
+            entity.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.SLOWNESS, duration, 1, true, false));
+            entity.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.WEAKNESS, duration, 1, true, false));
+        }
+        if (amplifier >= 4) {
+            entity.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.MINING_FATIGUE, duration, 2, true, false));
+            entity.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.SLOWNESS, duration, 2, true, false));
+            entity.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.WEAKNESS, duration, 2, true, false));
+            entity.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.POISON, duration, 0, true, false));
+        }
+        if (amplifier >= 5) {
+            entity.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.NAUSEA, duration, 3, true, false));
+            entity.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.BLINDNESS, duration, 3, true, false));
+        }
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public void renderHUDEffect(PotionEffect effect, Gui gui, int x, int y, float z, float alpha) {
+        Minecraft.getMinecraft().getTextureManager().bindTexture(ICON);
+        GlStateManager.enableBlend();
+        Gui.drawModalRectWithCustomSizedTexture(x + 3, y + 3, 0, 0, 18, 18, 16, 16);
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public void renderInventoryEffect(PotionEffect effect, Gui gui, int x, int y, float z) {
+        Minecraft.getMinecraft().getTextureManager().bindTexture(ICON);
+        GlStateManager.enableBlend();
+        Gui.drawModalRectWithCustomSizedTexture(x + 6, y + 7, 0, 0, 18, 18, 16, 16);
+    }
+}
+
+
+--------------------------------------------------
+
+[PlayerTimer.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.World;
+import net.minecraft.init.MobEffects;
+
+public class PlayerTimer implements IPlayerTimer {
+    private long timer = 0;
+    private long lastPillTakenWorldTime = 0;
+    private boolean permaDead = false;
+
+    private boolean[] msgSent = new boolean[6];
+
+    @Override public long getTimer() { return timer; }
+    @Override public void setTimer(long ticks) { this.timer = ticks; }
+    @Override public long getLastPillTime() { return lastPillTakenWorldTime; }
+    @Override public void setLastPillTime(long time) { this.lastPillTakenWorldTime = time; }
+    @Override public boolean isPermaDead() { return permaDead; }
+    @Override public void setPermaDead(boolean dead) { this.permaDead = dead; }
+
+    @Override
+    public void tick(World world, EntityPlayer player) {
+        if (world.isRemote || !PfiWorldData.get(world).isSystemEnabled()) return;
+        timer++;
+
+        PotionEffect virusEffect = player.getActivePotionEffect(ModPotions.VIRUS);
+        int currentLevel = (virusEffect != null) ? virusEffect.getAmplifier() : -1;
+
+        int[] thresholds = ModConfig.virusSettings.virusStageThresholds;
+        int targetLevel = -1;
+
+        if (thresholds != null && thresholds.length >= 6) {
+            for (int i = 5; i >= 0; i--) {
+                if (timer >= thresholds[i]) {
+                    targetLevel = i;
+                    break;
+                }
+            }
+        }
+
+        if (targetLevel != currentLevel && targetLevel >= 0) {
+            player.addPotionEffect(new PotionEffect(ModPotions.VIRUS, Integer.MAX_VALUE, targetLevel, true, false));
+        }
+
+        if (thresholds != null && thresholds.length >= 6) {
+            String[] localizationKeys = {
+                "msg.pills.tremor", "msg.pills.hard_to_move", "msg.pills.too_heavy",
+                "msg.pills.loud_heart", "msg.pills.dying", "msg.pills.too_late"
+            };
+            for (int i = 0; i < 6; i++) {
+                if (timer >= thresholds[i] && !msgSent[i]) {
+                    msgSent[i] = true;
+                    player.sendMessage(new TextComponentTranslation(localizationKeys[i]));
+                }
+            }
+        }
+
+        int deathTime = (thresholds != null && thresholds.length >= 6) ? thresholds[5] + 1200 : 86400;
+        if (timer >= deathTime) {
+            player.attackEntityFrom(EventHandler.VIRUS_DAMAGE, ModConfig.virusSettings.virusDeathDamage);
+        }
+    }
+
+    @Override
+    public void onPillTaken(World world, EntityPlayer player) {
+        if (!PfiWorldData.get(world).isSystemEnabled()) return;
+        long worldTime = world.getTotalWorldTime();
+
+        ModPotions.allowVirusRemoval = true;
+        player.removePotionEffect(ModPotions.VIRUS);
+        ModPotions.allowVirusRemoval = false;
+
+        player.removePotionEffect(MobEffects.MINING_FATIGUE);
+        player.removePotionEffect(MobEffects.SLOWNESS);
+        player.removePotionEffect(MobEffects.WEAKNESS);
+        player.removePotionEffect(MobEffects.POISON);
+        player.removePotionEffect(MobEffects.NAUSEA);
+        player.removePotionEffect(MobEffects.BLINDNESS);
+
+        timer = Math.max(0, timer - ModConfig.pillSettings.pillHealAmount);
+
+        int[] thresholds = ModConfig.virusSettings.virusStageThresholds;
+        if (thresholds != null && thresholds.length >= 6) {
+            for (int i = 0; i < 6; i++) {
+                if (timer < thresholds[i]) msgSent[i] = false;
+            }
+        }
+
+        if (ModConfig.overdoseSettings.enableOverdose) {
+            PotionEffect existingOverdose = player.getActivePotionEffect(ModPotions.OVERDOSE);
+
+            if (existingOverdose != null) {
+                int currentAmplifier = existingOverdose.getAmplifier();
+                int nextLevel = currentAmplifier + 1;
+
+                if (nextLevel >= ModConfig.overdoseSettings.maxOverdoseLevel) {
+                    player.attackEntityFrom(EventHandler.OVERDOSE_DAMAGE, ModConfig.overdoseSettings.overdoseDeathDamage);
+                    if (ModConfig.permadeathSettings.enablePermadeath) {
+                        setPermaDead(true);
+                    }
+                    return;
+                }
+                applyOverdoseEffect(player, nextLevel);
+            } else {
+                applyOverdoseEffect(player, 0);
+            }
+        }
+
+        lastPillTakenWorldTime = worldTime;
+    }
+
+    @Override
+    public void onBufferedPillTaken(World world, EntityPlayer player) {
+        if (!PfiWorldData.get(world).isSystemEnabled()) return;
+        long worldTime = world.getTotalWorldTime();
+
+        ModPotions.allowVirusRemoval = true;
+        player.removePotionEffect(ModPotions.VIRUS);
+        ModPotions.allowVirusRemoval = false;
+
+        player.removePotionEffect(MobEffects.MINING_FATIGUE);
+        player.removePotionEffect(MobEffects.SLOWNESS);
+        player.removePotionEffect(MobEffects.WEAKNESS);
+        player.removePotionEffect(MobEffects.POISON);
+        player.removePotionEffect(MobEffects.NAUSEA);
+        player.removePotionEffect(MobEffects.BLINDNESS);
+
+        timer = Math.max(0, timer - ModConfig.pillSettings.bufferedPillHealAmount);
+
+        int[] thresholds = ModConfig.virusSettings.virusStageThresholds;
+        if (thresholds != null && thresholds.length >= 6) {
+            for (int i = 0; i < 6; i++) {
+                if (timer < thresholds[i]) msgSent[i] = false;
+            }
+        }
+
+        lastPillTakenWorldTime = worldTime;
+    }
+
+    private void applyOverdoseEffect(EntityPlayer player, int level) {
+        int[] durations = ModConfig.overdoseSettings.overdoseDurations;
+        int duration = (durations != null && durations.length > level) ? durations[level] : 1200;
+        player.addPotionEffect(new PotionEffect(ModPotions.OVERDOSE, duration, level));
+    }
+}
+
+
+--------------------------------------------------
+
+[PillsForIllnessMod.java]:
+package com.example.pillsforillness;
+
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.SidedProxy;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+
+@Mod(modid = PillsForIllnessMod.MODID, name = "Pills for Illness", version = "1.0")
+public class PillsForIllnessMod {
+    public static final String MODID = "pills_for_illness";
+
+    @Mod.Instance
+    public static PillsForIllnessMod instance;
+
+    @SidedProxy(clientSide = "com.example.pillsforillness.ClientProxy", serverSide = "com.example.pillsforillness.CommonProxy")
+    public static CommonProxy proxy;
+
+    @Mod.EventHandler
+    public void preInit(FMLPreInitializationEvent event) {
+        proxy.preInit();
+    }
+
+    @Mod.EventHandler
+    public void init(FMLInitializationEvent event) {
+        proxy.init();
+    }
+
+    @Mod.EventHandler
+    public void serverStarting(FMLServerStartingEvent event) {
+        event.registerServerCommand(new CommandPfi());
+    }
+}
+
+
+--------------------------------------------------
+
+[ModPotions.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.potion.Potion;
+import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+@Mod.EventBusSubscriber
+public class ModPotions {
+    public static Potion OVERDOSE;
+    public static Potion VIRUS;
+
+    public static boolean allowVirusRemoval = false;
+    public static boolean allowOverdoseRemoval = false;
+
+    public static void init() {
+        OVERDOSE = new PotionOverdose();
+        VIRUS = new PotionVirus();
+    }
+
+    @SideOnly(Side.CLIENT)
+    public static void initClient() {
+        // Клиентская инициализация – здесь можно загрузить что-то, если нужно
+        // Но для иконок достаточно, чтобы классы Potion были загружены на клиенте
+    }
+
+    @SubscribeEvent
+    public static void registerPotions(RegistryEvent.Register<Potion> event) {
+        event.getRegistry().register(OVERDOSE);
+        event.getRegistry().register(VIRUS);
+    }
+}
+
+
+--------------------------------------------------
+
+[merged_output.txt]:
+
+
+--------------------------------------------------
+
+[ItemMod.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+import javax.annotation.Nullable;
+import java.util.List;
+
+public class ItemMod extends Item {
+    public ItemMod() {
+        super();
+        setCreativeTab(ModCreativeTabs.TAB_PILLS);
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
+        String key = getUnlocalizedName(stack) + ".tooltip";
+        if (I18n.hasKey(key)) {
+            tooltip.add(TextFormatting.ITALIC + I18n.format(key));
+        }
+    }
+}
+
+
+--------------------------------------------------
+
+[script_backup.py]:
+import os
+import re
+
+def split_merged_txt(input_file="merged_output.txt"):
+    """
+    Читает объединенный файл и восстанавливает/перезаписывает
+    все содержащиеся в нем файлы.
+    """
+    if not os.path.exists(input_file):
+        print(f"Ошибка: Файл '{input_file}' не найден в текущей папке.")
+        return
+
+    try:
+        with open(input_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except Exception as e:
+        print(f"Не удалось прочитать {input_file}: {e}")
+        return
+
+    # Регулярное выражение для поиска блоков файлов.
+    # Ищет конструкцию [имя_файла]: ... содержимое ... --------------------------------------------------
+    # Флаг re.DOTALL позволяет точке (.) соответствовать символу новой строки.
+    pattern = r"\[(.*?)\]:\n(.*?)\n\n--------------------------------------------------\n\n"
+    matches = re.findall(pattern, content, re.DOTALL)
+
+    if not matches:
+        # Пробуем более мягкий вариант на случай, если последний разделитель был изменен или обрезан
+        pattern = r"\[(.*?)\]:\n(.*?)(?=\n\n\[|\n\n--------------------------------------------------|\Z)"
+        matches = re.findall(pattern, content, re.DOTALL)
+
+    if not matches:
+        print("Не удалось найти файлы в правильном формате внутри переданного файла.")
+        return
+
+    script_name = os.path.basename(__file__)
+
+    for file_name, file_content in matches:
+        # Очищаем имя файла от возможных пробелов
+        file_name = file_name.strip()
+        
+        # Защита от перезаписи самого себя и файла-источника
+        if file_name in (script_name, input_file):
+            print(f"Пропуск файла {file_name} (безопасность: совпадает со скриптом или источником)")
+            continue
+
+        try:
+            # Создаем или перезаписываем файл
+            with open(file_name, 'w', encoding='utf-8') as outfile:
+                outfile.write(file_content)
+            print(f"Успешно восстановлен/обновлен файл: {file_name}")
+        except Exception as e:
+            print(f"Ошибка при записи файла {file_name}: {e}")
+
+    print("\nПроцесс восстановления завершен.")
+
+if __name__ == "__main__":
+    split_merged_txt()
+
+
+--------------------------------------------------
+
+[EventHandler.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockStone;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.monster.EntityZombie;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityChest;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.GameType;
+import net.minecraft.world.World;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+
+import java.util.Random;
+
+@Mod.EventBusSubscriber(modid = PillsForIllnessMod.MODID)
+public class EventHandler {
+    public static final DamageSource VIRUS_DAMAGE = new DamageSource("virus").setDamageBypassesArmor().setDamageAllowedInCreativeMode();
+    public static final DamageSource OVERDOSE_DAMAGE = new DamageSource("overdose").setDamageBypassesArmor().setDamageAllowedInCreativeMode();
+    private static final Random RAND = new Random();
+
+    @SubscribeEvent
+    public static void onWorldLoad(WorldEvent.Load event) {
+        World world = event.getWorld();
+        if (world.isRemote || world.provider.getDimension() != 0) return;
+
+        PfiWorldData data = PfiWorldData.get(world);
+        if (!data.isInitialized()) {
+            if (ModConfig.generalSettings.systemMode == ModConfig.SystemMode.ALWAYS_ON) {
+                data.setSystemEnabled(true);
+            } else {
+                data.setSystemEnabled(WorldCreationGuiHandler.pendingSystemEnabled);
+            }
+            data.setInitialized(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerLoggedInEvent event) {
+        World world = event.player.world;
+        if (world.isRemote || !PfiWorldData.get(world).isSystemEnabled()) return;
+
+        EntityPlayer player = event.player;
+        NBTTagCompound entityData = player.getEntityData();
+        NBTTagCompound persistent;
+
+        if (entityData.hasKey(EntityPlayer.PERSISTED_NBT_TAG)) {
+            persistent = entityData.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+        } else {
+            persistent = new NBTTagCompound();
+            entityData.setTag(EntityPlayer.PERSISTED_NBT_TAG, persistent);
+        }
+
+        if (!persistent.getBoolean("pfi_first_join_chest")) {
+            BlockPos chestPos = new BlockPos(player.posX, player.posY, player.posZ).down();
+            world.setBlockState(chestPos, Blocks.CHEST.getDefaultState(), 3);
+
+            TileEntity te = world.getTileEntity(chestPos);
+            if (te instanceof TileEntityChest) {
+                TileEntityChest chest = (TileEntityChest) te;
+                chest.setInventorySlotContents(0, new ItemStack(ModItems.PILL, 1));
+                chest.setInventorySlotContents(1, new ItemStack(ModItems.PILL, 1));
+                chest.setInventorySlotContents(2, new ItemStack(ModItems.PILL, 1));
+            }
+
+            persistent.setBoolean("pfi_first_join_chest", true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onBlockPlace(BlockEvent.PlaceEvent event) {
+        if (event.getWorld().isRemote || !PfiWorldData.get(event.getWorld()).isSystemEnabled()) return;
+        Block placedBlock = event.getPlacedBlock().getBlock();
+        if (placedBlock == Blocks.IRON_ORE) {
+            PlayerPlacedBlocksData data = PlayerPlacedBlocksData.get(event.getWorld());
+            data.addPlacedBlock(event.getPos());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onBlockHarvest(BlockEvent.HarvestDropsEvent event) {
+        World world = event.getWorld();
+        if (world.isRemote || !PfiWorldData.get(world).isSystemEnabled()) return;
+
+        Block stateBlock = event.getState().getBlock();
+        BlockPos pos = event.getPos();
+
+        if (stateBlock == Blocks.STONE && event.getState().getValue(BlockStone.VARIANT) == BlockStone.EnumType.STONE) {
+            double randVal = RAND.nextDouble();
+            double c2 = ModConfig.dropSettings.neutralizerChance2;
+            double c1 = ModConfig.dropSettings.neutralizerChance1;
+
+            if (c2 > 0 && randVal < c2) {
+                if (ModConfig.dropSettings.cancelCobblestoneDrop) {
+                    event.getDrops().clear();
+                }
+                event.getDrops().add(new ItemStack(ModItems.NEUTRALIZER, 2));
+            } else if (c1 > 0 && randVal < (c2 + c1)) {
+                if (ModConfig.dropSettings.cancelCobblestoneDrop) {
+                    event.getDrops().clear();
+                }
+                event.getDrops().add(new ItemStack(ModItems.NEUTRALIZER, 1));
+            }
+        }
+
+        if (stateBlock == Blocks.IRON_ORE) {
+            PlayerPlacedBlocksData data = PlayerPlacedBlocksData.get(world);
+            if (data.isPlacedByPlayer(pos)) {
+                data.removePlacedBlock(pos);
+            } else {
+                double chance = ModConfig.dropSettings.medicinePowderChance;
+                if (chance > 0 && RAND.nextDouble() < chance) {
+                    event.getDrops().add(new ItemStack(ModItems.MEDICINE_POWDER, 1));
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.START || event.player.world.isRemote) return;
+        if (!PfiWorldData.get(event.player.world).isSystemEnabled()) return;
+
+        EntityPlayer player = event.player;
+
+        if (ModConfig.permadeathSettings.enablePermadeath && player instanceof EntityPlayerMP) {
+            EntityPlayerMP mp = (EntityPlayerMP) player;
+            if (mp.isSpectator()) return;
+
+            NBTTagCompound data = mp.getEntityData();
+            NBTTagCompound persistent = data.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+            if (persistent.getBoolean("pfi_perma_dead")) {
+                mp.setGameType(GameType.SPECTATOR);
+                return;
+            }
+
+            IPlayerTimer timer = mp.getCapability(CapabilityPlayerTimer.TIMER_CAP, null);
+            if (timer != null && timer.isPermaDead()) {
+                mp.setGameType(GameType.SPECTATOR);
+                return;
+            }
+        }
+
+        IPlayerTimer timer = player.getCapability(CapabilityPlayerTimer.TIMER_CAP, null);
+        if (timer != null) {
+            timer.tick(player.world, player);
+        }
+
+        NBTTagCompound entityData = player.getEntityData();
+        NBTTagCompound persistent;
+
+        if (entityData.hasKey(EntityPlayer.PERSISTED_NBT_TAG)) {
+            persistent = entityData.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+        } else {
+            persistent = new NBTTagCompound();
+            entityData.setTag(EntityPlayer.PERSISTED_NBT_TAG, persistent);
+        }
+
+        if (!persistent.getBoolean("pfi_had_carrot")) {
+            boolean hasCarrot = false;
+            for (int i = 0; i < player.inventory.getSizeInventory(); i++) {
+                ItemStack stack = player.inventory.getStackInSlot(i);
+                if (!stack.isEmpty() && stack.getItem() == Items.CARROT) {
+                    hasCarrot = true;
+                    break;
+                }
+            }
+            if (hasCarrot) {
+                persistent.setBoolean("pfi_had_carrot", true);
+            }
+        }
+
+        if (ModConfig.monitorSettings.enableMedicalMonitor && !persistent.getBoolean("pfi_monitor_dropped")) {
+            if (!persistent.hasKey("pfi_start_x")) {
+                persistent.setDouble("pfi_start_x", player.posX);
+                persistent.setDouble("pfi_start_y", player.posY);
+                persistent.setDouble("pfi_start_z", player.posZ);
+            } else {
+                double startX = persistent.getDouble("pfi_start_x");
+                double startY = persistent.getDouble("pfi_start_y");
+                double startZ = persistent.getDouble("pfi_start_z");
+
+                double distSq = player.getDistanceSq(startX, startY, startZ);
+                if (distSq >= 25.0) {
+                    persistent.setBoolean("pfi_monitor_dropped", true);
+                    float damage = ModConfig.monitorSettings.monitorDropDamage;
+                    if (damage > 0.0F) {
+                        player.attackEntityFrom(DamageSource.GENERIC, damage);
+                    }
+                    player.dropItem(new ItemStack(ModItems.MEDICAL_MONITOR, 1), true);
+                    player.sendMessage(new TextComponentTranslation("msg.pills.monitor_dropped"));
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onZombieDrops(LivingDropsEvent event) {
+        World world = event.getEntityLiving().world;
+        if (world.isRemote || !PfiWorldData.get(world).isSystemEnabled()) return;
+        if (!ModConfig.dropSettings.guaranteeCarrotDrop) return;
+
+        if (event.getEntityLiving() instanceof EntityZombie) {
+            EntityZombie zombie = (EntityZombie) event.getEntityLiving();
+            if (event.getSource().getTrueSource() instanceof EntityPlayer) {
+                EntityPlayer player = (EntityPlayer) event.getSource().getTrueSource();
+                NBTTagCompound entityData = player.getEntityData();
+                NBTTagCompound persistent = entityData.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+
+                if (!persistent.getBoolean("pfi_had_carrot")) {
+                    boolean hasCarrotInDrops = false;
+                    for (EntityItem drop : event.getDrops()) {
+                        if (drop.getItem().getItem() == Items.CARROT) {
+                            hasCarrotInDrops = true;
+                            break;
+                        }
+                    }
+                    if (!hasCarrotInDrops) {
+                        event.getDrops().add(new EntityItem(
+                            world,
+                            zombie.posX,
+                            zombie.posY,
+                            zombie.posZ,
+                            new ItemStack(Items.CARROT, 1)
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerDeath(LivingDeathEvent event) {
+        if (!(event.getEntity() instanceof EntityPlayer) || event.getEntity().world.isRemote) return;
+        World world = event.getEntity().world;
+        if (!PfiWorldData.get(world).isSystemEnabled()) return;
+
+        EntityPlayer player = (EntityPlayer) event.getEntity();
+        IPlayerTimer timer = player.getCapability(CapabilityPlayerTimer.TIMER_CAP, null);
+
+        boolean shouldPerma = false;
+
+        if (timer != null) {
+            if (event.getSource() != VIRUS_DAMAGE && event.getSource() != OVERDOSE_DAMAGE) {
+                if (ModConfig.virusSettings.resetVirusOnDeath) {
+                    timer.setTimer(0);
+                }
+            }
+
+            if (ModConfig.permadeathSettings.enablePermadeath) {
+                if (event.getSource() == OVERDOSE_DAMAGE || event.getSource() == VIRUS_DAMAGE) {
+                    timer.setPermaDead(true);
+                    shouldPerma = true;
+                } else if (ModConfig.overdoseSettings.enableOverdose) {
+                    PotionEffect activeOverdose = player.getActivePotionEffect(ModPotions.OVERDOSE);
+                    if (activeOverdose != null) {
+                        int level = activeOverdose.getAmplifier();
+                        double[] chances = ModConfig.overdoseSettings.overdoseDeathChances;
+
+                        double chance = (chances != null && chances.length > level) ? chances[level] : 0.0;
+                        if (RAND.nextDouble() < chance) {
+                            timer.setPermaDead(true);
+                            shouldPerma = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (shouldPerma && ModConfig.permadeathSettings.enablePermadeath) {
+            NBTTagCompound data = player.getEntityData();
+            NBTTagCompound persistent = data.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+            persistent.setBoolean("pfi_perma_dead", true);
+            data.setTag(EntityPlayer.PERSISTED_NBT_TAG, persistent);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerRespawnEvent event) {
+        if (event.player.world.isRemote || !ModConfig.permadeathSettings.enablePermadeath) return;
+        if (!PfiWorldData.get(event.player.world).isSystemEnabled()) return;
+
+        EntityPlayer player = event.player;
+        NBTTagCompound data = player.getEntityData();
+        NBTTagCompound persistent = data.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+
+        if (persistent.getBoolean("pfi_perma_dead") && player instanceof EntityPlayerMP) {
+            ((EntityPlayerMP) player).setGameType(GameType.SPECTATOR);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerClone(PlayerEvent.Clone event) {
+        EntityPlayer original = event.getOriginal();
+        EntityPlayer clone = event.getEntityPlayer();
+
+        NBTTagCompound origData = original.getEntityData();
+        if (origData.hasKey(EntityPlayer.PERSISTED_NBT_TAG)) {
+            clone.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, origData.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG).copy());
+        }
+
+        IPlayerTimer oldTimer = original.getCapability(CapabilityPlayerTimer.TIMER_CAP, null);
+        IPlayerTimer newTimer = clone.getCapability(CapabilityPlayerTimer.TIMER_CAP, null);
+
+        if (oldTimer != null && newTimer != null) {
+            newTimer.setTimer(oldTimer.getTimer());
+            newTimer.setLastPillTime(oldTimer.getLastPillTime());
+            newTimer.setPermaDead(oldTimer.isPermaDead());
+        }
+    }
+}
+
+
+--------------------------------------------------
+
+[PotionOverdose.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.init.MobEffects;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+public class PotionOverdose extends Potion {
+    private static final ResourceLocation ICON = new ResourceLocation(PillsForIllnessMod.MODID, "textures/gui/overdose.png");
+
+    public PotionOverdose() {
+        super(true, 0xCC0000);
+        setPotionName("effect.overdose");
+        setRegistryName("overdose");
+    }
+
+    @Override
+    public boolean hasStatusIcon() {
+        return false;
+    }
+
+    @Override
+    public boolean isReady(int duration, int amplifier) {
+        return true; // Работать каждый тик
+    }
+
+    @Override
+    public void performEffect(EntityLivingBase entity, int amplifier) {
+        int duration = 20; // на 1 секунду каждую секунду обновления
+        if (amplifier >= 0) { // Уровень I
+            entity.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, duration, 0, true, false));
+        }
+        if (amplifier >= 1) { // Уровень II
+            entity.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, duration, 1, true, false));
+        }
+        if (amplifier >= 2) { // Уровень III
+            entity.addPotionEffect(new PotionEffect(MobEffects.NAUSEA, duration, 0, true, false));
+            entity.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, duration, 2, true, false));
+            entity.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, duration, 1, true, false));
+        }
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public void renderHUDEffect(PotionEffect effect, Gui gui, int x, int y, float z, float alpha) {
+        Minecraft.getMinecraft().getTextureManager().bindTexture(ICON);
+        GlStateManager.enableBlend();
+        Gui.drawModalRectWithCustomSizedTexture(x + 3, y + 3, 0, 0, 18, 18, 16, 16);
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public void renderInventoryEffect(PotionEffect effect, Gui gui, int x, int y, float z) {
+        Minecraft.getMinecraft().getTextureManager().bindTexture(ICON);
+        GlStateManager.enableBlend();
+        Gui.drawModalRectWithCustomSizedTexture(x + 6, y + 7, 0, 0, 18, 18, 16, 16);
+    }
+}
+
+
+--------------------------------------------------
+
+[CommonProxy.java]:
+package com.example.pillsforillness;
+
+import net.minecraftforge.common.capabilities.CapabilityManager;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+
+public class CommonProxy {
+    public void preInit() {
+        ModPotions.init();
+        CapabilityManager.INSTANCE.register(IPlayerTimer.class, new PlayerTimerStorage(), PlayerTimer::new);
+        // CapabilityHandler.register(); -- УДАЛЕНО, так как класс использует @EventBusSubscriber
+    }
+
+    public void init() {
+        // EventHandler.register(); -- УДАЛЕНО, так как класс использует @EventBusSubscriber
+    }
+}
+
+
+--------------------------------------------------
+
+[ModItems.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.item.Item;
+import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+@Mod.EventBusSubscriber(modid = PillsForIllnessMod.MODID)
+public class ModItems {
+
+    public static Item WHITE_PART;
+    public static Item ORANGE_PART;
+    public static Item MEDICINE_POWDER;
+    public static Item PILL;
+    public static Item BUFFERED_PILL;
+    public static Item NEUTRALIZER;
+    public static Item MEDICAL_MONITOR;
+
+    @SubscribeEvent
+    public static void registerItems(RegistryEvent.Register<Item> event) {
+        WHITE_PART = new ItemMod()
+            .setUnlocalizedName("whitepart")
+            .setRegistryName(PillsForIllnessMod.MODID, "whitepart");
+
+        ORANGE_PART = new ItemMod()
+            .setUnlocalizedName("orangepart")
+            .setRegistryName(PillsForIllnessMod.MODID, "orangepart");
+
+        MEDICINE_POWDER = new ItemMod()
+            .setUnlocalizedName("medicinepowder")
+            .setRegistryName(PillsForIllnessMod.MODID, "medicinepowder");
+
+        PILL = new PillItem()
+            .setUnlocalizedName("pill")
+            .setRegistryName(PillsForIllnessMod.MODID, "pill");
+
+        BUFFERED_PILL = new BufferedPillItem()
+            .setUnlocalizedName("bufferedpill")
+            .setRegistryName(PillsForIllnessMod.MODID, "bufferedpill");
+
+        NEUTRALIZER = new ItemMod()
+            .setUnlocalizedName("neutralizer")
+            .setRegistryName(PillsForIllnessMod.MODID, "neutralizer");
+
+        MEDICAL_MONITOR = new MedicalMonitorItem()
+            .setUnlocalizedName("medicalmonitor")
+            .setRegistryName(PillsForIllnessMod.MODID, "medicalmonitor");
+
+        event.getRegistry().registerAll(WHITE_PART, ORANGE_PART, MEDICINE_POWDER, PILL, BUFFERED_PILL, NEUTRALIZER, MEDICAL_MONITOR);
+    }
+}
+
+
+--------------------------------------------------
+
+[PfiWorldData.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.World;
+import net.minecraft.world.storage.MapStorage;
+import net.minecraft.world.storage.WorldSavedData;
+
+public class PfiWorldData extends WorldSavedData {
+    private static final String DATA_NAME = PillsForIllnessMod.MODID + "_world_data";
+
+    private boolean systemEnabled = true;
+    private boolean initialized = false;
+
+    public PfiWorldData() {
+        super(DATA_NAME);
+    }
+
+    public PfiWorldData(String name) {
+        super(name);
+    }
+
+    public static PfiWorldData get(World world) {
+        World mainWorld = (world.getMinecraftServer() != null) ? world.getMinecraftServer().getEntityWorld() : world;
+        MapStorage storage = mainWorld.getMapStorage();
+        if (storage == null) return new PfiWorldData();
+
+        PfiWorldData instance = (PfiWorldData) storage.getOrLoadData(PfiWorldData.class, DATA_NAME);
+        if (instance == null) {
+            instance = new PfiWorldData();
+            storage.setData(DATA_NAME, instance);
+        }
+        return instance;
+    }
+
+    public boolean isSystemEnabled() {
+        return systemEnabled;
+    }
+
+    public void setSystemEnabled(boolean enabled) {
+        this.systemEnabled = enabled;
+        markDirty();
+    }
+
+    public boolean isInitialized() {
+        return initialized;
+    }
+
+    public void setInitialized(boolean initialized) {
+        this.initialized = initialized;
+        markDirty();
+    }
+
+    @Override
+    public void readFromNBT(NBTTagCompound nbt) {
+        systemEnabled = nbt.getBoolean("systemEnabled");
+        initialized = nbt.getBoolean("initialized");
+    }
+
+    @Override
+    public NBTTagCompound writeToNBT(NBTTagCompound compound) {
+        compound.setBoolean("systemEnabled", systemEnabled);
+        compound.setBoolean("initialized", initialized);
+        return compound;
+    }
+}
+
+
+--------------------------------------------------
+
+[CapabilityHandler.java]:
+package com.example.pillsforillness;
+
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+@Mod.EventBusSubscriber
+public class CapabilityHandler {
+    public static final ResourceLocation TIMER_KEY = new ResourceLocation(PillsForIllnessMod.MODID, "timer");
+
+    public static void register() {
+        // статический класс, события ловятся автоматически
+    }
+
+    @SubscribeEvent
+    public static void attachCapability(AttachCapabilitiesEvent<Entity> event) {
+        if (event.getObject() instanceof EntityPlayer) {
+            event.addCapability(TIMER_KEY, new CapabilityPlayerTimer.Provider());
+        }
+    }
+}
+
+
+--------------------------------------------------
+

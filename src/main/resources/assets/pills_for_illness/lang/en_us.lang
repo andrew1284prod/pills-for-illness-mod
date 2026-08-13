@@ -1,71 +1,121 @@
-# Items
-item.whitepart.name=White Capsule Half
-item.orangepart.name=Orange Capsule Half
-item.medicinepowder.name=Medicine Powder
-item.pill.name=Pill
-item.bufferedpill.name=Buffered Pill
-item.neutralizer.name=Neutralizer
+# ==========================================
+# Creative Tab
+# ==========================================
+itemGroup.pills_for_illness=Pills for Illness
 
-# Potion Effects
+# ==========================================
+# Items & Tooltips
+# ==========================================
+item.whitepart.name=White Capsule Half
+item.whitepart.tooltip="It's white and sweet. Well, obviously."
+
+item.orangepart.name=Orange Capsule Half
+item.orangepart.tooltip="Why do I need bones that are painted orange?"
+
+item.medicinepowder.name=Medicinal Powder
+item.medicinepowder.tooltip="It acts strongly — heals and harms."
+
+item.pill.name=Pill (Capsule)
+item.pill.tooltip="It actually heals! Oh, feeling kind of sick..."
+
+item.bufferedpill.name=Buffered Pill (Capsule)
+item.bufferedpill.tooltip="Less effective, but at least I'm not feeling sick!"
+
+item.neutralizer.name=Neutralizer
+item.neutralizer.tooltip="Reduces the pill's negative effects... Along with the positive ones."
+
+item.medicalmonitor.name=Medical Monitor
+item.medicalmonitor.tooltip="An old piece of tech you were supposed to wear for monitoring during rehab... that no longer exists."
+
+# ==========================================
+# Effects
+# ==========================================
 effect.virus=Virus
 effect.overdose=Overdose
 
-# Messages
-msg.pills.tremor=You feel slightly unwell...
-msg.pills.hard_to_move=It is getting harder to move...
-msg.pills.too_heavy=Your body feels heavy as lead...
-msg.pills.loud_heart=Your heart is beating too loudly...
-msg.pills.dying=The virus is burning you from within...
-msg.pills.too_late=It is too late...
+# ==========================================
+# GUI (World Creation)
+# ==========================================
+gui.pills_for_illness.enabled=Enabled
+gui.pills_for_illness.disabled=Disabled
+gui.pills_for_illness.toggle_button=Pills for Illness System: %s
 
-# Command /pfi
-commands.pfi.usage=/pfi <add|current|reset|info>
-commands.pfi.players_only=§cOnly players can use this command.
-commands.pfi.no_permission=§cYou do not have permission to use this command.
-commands.pfi.error_no_data=§cError: Player data not found.
-commands.pfi.invalid_number=§cInvalid number: %s
-commands.pfi.unknown_subcommand=§cUnknown subcommand. Use: add, current, reset, info
-commands.pfi.add.usage=§eUsage: /pfi add <number>
-commands.pfi.add.success=§aTimer increased by %s ticks. Current value: %s ticks (%s min %s sec)
-commands.pfi.current.success=§aCurrent virus timer: %s ticks (%s min %s sec)
-commands.pfi.reset.success=§aVirus timer has been reset.
-commands.pfi.info.header=§6=== Virus Information ===
-commands.pfi.info.stage1=§e30 min (36000 ticks): Mining Fatigue I
-commands.pfi.info.stage2=§e40 min (48000 ticks): Mining Fatigue I, Slowness I
-commands.pfi.info.stage3=§e50 min (60000 ticks): Mining Fatigue I, Slowness I, Weakness I
-commands.pfi.info.stage4=§e60 min (72000 ticks): Mining Fatigue II, Slowness II, Weakness II
-commands.pfi.info.stage5=§e70 min (84000 ticks): Mining Fatigue III, Slowness III, Weakness III, Poison I
-commands.pfi.info.stage6=§e71 min (85200 ticks): +Nausea IV, Blindness IV
-commands.pfi.info.death=§c72 min (86400 ticks): DEATH
-commands.pfi.info.overdose_header=§6=== Overdose ===
-commands.pfi.info.overdose1=§eLevel I: 60 sec, Weakness I (20%% permadeath chance on death)
-commands.pfi.info.overdose2=§eLevel II: 120 sec, Weakness I, Slowness II (40%% chance)
-commands.pfi.info.overdose3=§eLevel III: 180 sec, Nausea, Weakness II, Slowness III (60%% chance)
-commands.pfi.info.overdose4=§cLevel IV: Instant death (100%% permadeath)
+# ==========================================
+# Chat Messages & Indicators
+# ==========================================
+msg.pills.monitor_status=Apparently, the tiny screen on this device shows the virus infection percentage: %s%%
+msg.pills.monitor_dropped=You dropped a needle-tipped indicator device that was stuck inside you...
+msg.pills.tremor=You feel a slight tremor in your hands...
+msg.pills.hard_to_move=It becomes difficult for you to move.
+msg.pills.too_heavy=Your strength is slowly fading away.
+msg.pills.loud_heart=Your heartbeat echoes in your ears.
+msg.pills.dying=Your body is failing; you are on the brink of death...
+msg.pills.too_late=The virus has taken total control of your body. Death is inevitable (or is it...)
 
-# Configs
+# ==========================================
+# Commands (/pfi)
+# ==========================================
+commands.pfi.usage=Usage: /pfi <add|current|reset|info> [value]
+commands.pfi.players_only=This command can only be used by players.
+commands.pfi.error_no_data=Failed to retrieve virus timer data.
+commands.pfi.add.usage=Usage: /pfi add <ticks>
+commands.pfi.add.success=Added %s ticks. New value: %s (%s min %s sec)
+commands.pfi.invalid_number=Invalid number: %s
+commands.pfi.current.success=Current virus timer: %s ticks (%s min %s sec)
+commands.pfi.reset.success=Virus timer and last pill timestamp have been reset.
+commands.pfi.unknown_subcommand=Unknown subcommand. Use: add, current, reset, info
+
+commands.pfi.info.stage1=Stage 1: Mild Fatigue
+commands.pfi.info.stage2=Stage 2: Slowness
+commands.pfi.info.stage3=Stage 3: Weakness
+commands.pfi.info.stage4=Stage 4: Severe Slowness and Exhaustion
+commands.pfi.info.stage5=Stage 5: Poisoning and Debilitation
+commands.pfi.info.stage6=Stage 6: Nausea, Blindness, and Impending Death
+commands.pfi.info.death=Death occurs after 2 minutes of inaction following Stage 6.
+commands.pfi.info.overdose_header=--- Overdose ---
+commands.pfi.info.overdose1=Level I: Weakness
+commands.pfi.info.overdose2=Level II: Weakness + Slowness II
+commands.pfi.info.overdose3=Level III: Nausea, Slowness III, Weakness II
+commands.pfi.info.overdose4=Level IV: Instant and permanent death.
+
+# ==========================================
+# Configuration (ModConfig)
+# ==========================================
 config.pills_for_illness.title=Pills for Illness Settings
+config.pills_for_illness.general=General Settings
+config.pills_for_illness.general.systemMode=System Operating Mode
+config.pills_for_illness.general.systemMode.tooltip=ALWAYS_ON - permanently enabled, ASK - toggleable upon world creation.
+
 config.pills_for_illness.virus=Virus Settings
-config.pills_for_illness.virus.resetOnDeath=Reset virus on death
-config.pills_for_illness.virus.deathDamage=Virus death damage
-config.pills_for_illness.virus.thresholds=Virus stage thresholds (in ticks)
+config.pills_for_illness.virus.resetOnDeath=Reset Virus on Death
+config.pills_for_illness.virus.deathDamage=Lethal Stage Damage
+config.pills_for_illness.virus.thresholds=Virus Stage Thresholds (in ticks)
 
 config.pills_for_illness.overdose=Overdose Settings
-config.pills_for_illness.overdose.enable=Enable overdose
-config.pills_for_illness.overdose.maxLevel=Maximum overdose level
-config.pills_for_illness.overdose.deathDamage=Overdose death damage
-config.pills_for_illness.overdose.durations=Overdose durations per level
-config.pills_for_illness.overdose.deathChances=Permadeath chances on overdose death
+config.pills_for_illness.overdose.enable=Enable Overdose
+config.pills_for_illness.overdose.maxLevel=Max Overdose Level
+config.pills_for_illness.overdose.deathDamage=Lethal Overdose Damage
+config.pills_for_illness.overdose.durations=Level Durations (in ticks)
+config.pills_for_illness.overdose.deathChances=Death Chances on Effect
 
 config.pills_for_illness.pill=Pill Settings
-config.pills_for_illness.pill.healAmount=Regular pill heal amount (ticks)
-config.pills_for_illness.pill.bufferedHealAmount=Buffered pill heal amount (ticks)
+config.pills_for_illness.pill.healAmount=Standard Pill Treatment Amount (in ticks)
+config.pills_for_illness.pill.bufferedHealAmount=Buffered Pill Treatment Amount (in ticks)
+config.pills_for_illness.pill.pillCooldown=Standard Pill Cooldown
+config.pills_for_illness.pill.bufferedPillCooldown=Buffered Pill Cooldown
+
+config.pills_for_illness.monitor=Medical Monitor Settings
+config.pills_for_illness.monitor.enable=Enable Monitor
+config.pills_for_illness.monitor.cooldown=Monitor Use Cooldown
+config.pills_for_illness.monitor.dropDamage=Monitor Drop Damage
+config.pills_for_illness.monitor.useDamage=Monitor Use Damage
 
 config.pills_for_illness.permadeath=Permadeath Settings
-config.pills_for_illness.permadeath.enable=Enable permadeath
+config.pills_for_illness.permadeath.enable=Enable Permadeath (Spectator Mode)
 
 config.pills_for_illness.drop=Drop Settings
-config.pills_for_illness.drop.neutralizerChance1=Chance to drop 1 neutralizer (0.05 = 5%%)
-config.pills_for_illness.drop.neutralizerChance2=Chance to drop 2 neutralizers (0.02 = 2%%)
-config.pills_for_illness.drop.cancelCobblestone=Cancel cobblestone drop
-config.pills_for_illness.drop.powderChance=Medicine powder drop chance from iron ore (0.50 = 50%%)
+config.pills_for_illness.drop.neutralizerChance1=Chance for 1 Neutralizer from Stone
+config.pills_for_illness.drop.neutralizerChance2=Chance for 2 Neutralizers from Stone
+config.pills_for_illness.drop.cancelCobblestone=Replace Cobblestone when Neutralizer Drops
+config.pills_for_illness.drop.powderChance=Medicinal Powder Chance from Natural Iron Ore
+config.pills_for_illness.drop.guaranteeCarrotDrop=Guarantee Zombie Carrot Drop on Start

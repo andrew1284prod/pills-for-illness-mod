@@ -2,8 +2,7 @@ package com.example.pillsforillness;
 
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemFood;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
@@ -13,25 +12,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class PillItem extends ItemFood {
-    public PillItem() {
-        super(0, 0, false);
-        setAlwaysEdible();
+public class ItemMod extends Item {
+    public ItemMod() {
+        super();
         setCreativeTab(ModCreativeTabs.TAB_PILLS);
-    }
-
-    @Override
-    protected void onFoodEaten(ItemStack stack, World worldIn, EntityPlayer player) {
-        if (!worldIn.isRemote) {
-            IPlayerTimer timer = player.getCapability(CapabilityPlayerTimer.TIMER_CAP, null);
-            if (timer != null) {
-                timer.onPillTaken(worldIn, player);
-            }
-        }
-
-        if (ModConfig.pillSettings.pillCooldown > 0) {
-            player.getCooldownTracker().setCooldown(this, ModConfig.pillSettings.pillCooldown);
-        }
     }
 
     @SideOnly(Side.CLIENT)

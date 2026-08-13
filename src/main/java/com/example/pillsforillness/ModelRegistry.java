@@ -18,6 +18,7 @@ public class ModelRegistry {
         registerModel(ModItems.PILL);
         registerModel(ModItems.BUFFERED_PILL);
         registerModel(ModItems.NEUTRALIZER);
+        registerModel(ModItems.MEDICAL_MONITOR); // <-- ДОБАВЛЕНО
     }
 
     private static void registerModel(Item item) {

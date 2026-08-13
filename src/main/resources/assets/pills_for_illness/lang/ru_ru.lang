@@ -1,71 +1,121 @@
-# Предметы
-item.whitepart.name=Белая половина капсулы
-item.orangepart.name=Оранжевая половина капсулы
-item.medicinepowder.name=Лекарственный порошок
-item.pill.name=Таблетка
-item.bufferedpill.name=Нейтрализованная таблетка
-item.neutralizer.name=Нейтрализатор
+# ==========================================
+# Вкладка Креатива
+# ==========================================
+itemGroup.pills_for_illness=Pills for Illness
 
-# Зелья
+# ==========================================
+# Предметы и Тултипы
+# ==========================================
+item.whitepart.name=Белая половинка капсулы
+item.whitepart.tooltip="Оно белое, и сладкое. Ох, очевидно."
+
+item.orangepart.name=Оранжевая половинка капсулы
+item.orangepart.tooltip="Зачем мне кости, которые покрашенные в оранжевый цвет?"
+
+item.medicinepowder.name=Лекарственный порошок
+item.medicinepowder.tooltip="Оно сильно действует — Лечит и калечит."
+
+item.pill.name=Таблетка (Капсульная)
+item.pill.tooltip="Оно реально лечит! Ох, чёт поплохело..."
+
+item.bufferedpill.name=Буферизованная таблетка (Капсульная)
+item.bufferedpill.tooltip="Толку меньше, но мне не плохеет!"
+
+item.neutralizer.name=Нейтрализатор
+item.neutralizer.tooltip="Уменьшает негативные эффекты таблетки... Вместе с положительными."
+
+item.medicalmonitor.name=Медицинский монитор
+item.medicalmonitor.tooltip="Старая штука, которую ты должен был носить для контроля во время реабилитации, которой уже нет."
+
+# ==========================================
+# Эффекты
+# ==========================================
 effect.virus=Вирус
 effect.overdose=Передозировка
 
-# Сообщения
-msg.pills.tremor=Вы почувствовали легкое недомогание...
-msg.pills.hard_to_move=Вам становится тяжелее передвигаться...
-msg.pills.too_heavy=Тело наливается свинцом...
-msg.pills.loud_heart=Сердце бьется слишком громко...
-msg.pills.dying=Вирус сжигает вас изнутри...
-msg.pills.too_late=Слишком поздно...
+# ==========================================
+# GUI (Создание мира)
+# ==========================================
+gui.pills_for_illness.enabled=Включена
+gui.pills_for_illness.disabled=Выключена
+gui.pills_for_illness.toggle_button=Система Pills for Illness: %s
 
-# Команда /pfi
-commands.pfi.usage=/pfi <add|current|reset|info>
-commands.pfi.players_only=§cТолько игрок может использовать эту команду.
-commands.pfi.no_permission=§cУ вас нет прав для использования этой команды.
-commands.pfi.error_no_data=§cОшибка: данные игрока не найдены.
-commands.pfi.invalid_number=§cНеверное число: %s
-commands.pfi.unknown_subcommand=§cНеизвестная подкоманда. Используйте: add, current, reset, info
-commands.pfi.add.usage=§eИспользование: /pfi add <число>
-commands.pfi.add.success=§aТаймер увеличен на %s тиков. Текущее значение: %s тиков (%s мин %s сек)
-commands.pfi.current.success=§aТекущий счётчик вируса: %s тиков (%s мин %s сек)
-commands.pfi.reset.success=§aСчётчик вируса сброшен.
-commands.pfi.info.header=§6=== Информация о вирусе ===
-commands.pfi.info.stage1=§e30 мин (36000 тиков): Усталость I
-commands.pfi.info.stage2=§e40 мин (48000 тиков): Усталость I, Замедление I
-commands.pfi.info.stage3=§e50 мин (60000 тиков): Усталость I, Замедление I, Слабость I
-commands.pfi.info.stage4=§e60 мин (72000 тиков): Усталость II, Замедление II, Слабость II
-commands.pfi.info.stage5=§e70 мин (84000 тиков): Усталость III, Замедление III, Слабость III, Отравление I
-commands.pfi.info.stage6=§e71 мин (85200 тиков): +Тошнота IV, Слепота IV
-commands.pfi.info.death=§c72 мин (86400 тиков): СМЕРТЬ
-commands.pfi.info.overdose_header=§6=== Передозировка ===
-commands.pfi.info.overdose1=§eУровень I: 60 сек, Слабость I (шанс пермадеса при смерти 20%%)
-commands.pfi.info.overdose2=§eУровень II: 120 сек, Слабость I, Замедление II (шанс 40%%)
-commands.pfi.info.overdose3=§eУровень III: 180 сек, Тошнота, Слабость II, Замедление III (шанс 60%%)
-commands.pfi.info.overdose4=§cУровень IV: Мгновенная смерть (пермадес 100%%)
+# ==========================================
+# Сообщения в чате и Индикаторы
+# ==========================================
+msg.pills.monitor_status=Видимо, на маленьком экранчике этого аппарата указан процент заражения вирусом : %s%%
+msg.pills.monitor_dropped=Вы обронили какой-то шприц с индикатором, который был воткнут в вас...
+msg.pills.tremor=Вы чувствуете легкий тремор в руках...
+msg.pills.hard_to_move=Вам становится тяжело передвигаться.
+msg.pills.too_heavy=Силы медленно покидают вас.
+msg.pills.loud_heart=Стук сердца отдается в ушах.
+msg.pills.dying=Организм отказывает, вы на грани гибели...
+msg.pills.too_late=Вирус полностью овладел вашим телом. Смерть неизбежна (или...)
 
-# Конфиги
+# ==========================================
+# Команды (/pfi)
+# ==========================================
+commands.pfi.usage=Использование: /pfi <add|current|reset|info> [значение]
+commands.pfi.players_only=Эта команда доступна только игрокам.
+commands.pfi.error_no_data=Не удалось получить данные таймера вируса.
+commands.pfi.add.usage=Использование: /pfi add <тики>
+commands.pfi.add.success=Добавлено %s тиков. Новое значение: %s (%s мин %s сек)
+commands.pfi.invalid_number=Некорректное число: %s
+commands.pfi.current.success=Текущий таймер вируса: %s тиков (%s мин %s сек)
+commands.pfi.reset.success=Таймер вируса и время последней таблетки сброшены.
+commands.pfi.unknown_subcommand=Неизвестная подкоманда. Используйте: add, current, reset, info
+
+commands.pfi.info.stage1=Стадия 1 : Легкая усталость
+commands.pfi.info.stage2=Стадия 2 : Замедление
+commands.pfi.info.stage3=Стадия 3 : Слабость
+commands.pfi.info.stage4=Стадия 4 : Сильное замедление и утомление
+commands.pfi.info.stage5=Стадия 5 : Отравление и упадок сил
+commands.pfi.info.stage6=Стадия 6 : Тошнота, слепота и скорая смерть
+commands.pfi.info.death=Смерть наступает через 2 минуты бездействия после 6-й стадии.
+commands.pfi.info.overdose_header=--- Передозировка ---
+commands.pfi.info.overdose1=Уровень I: Слабость
+commands.pfi.info.overdose2=Уровень II: Слабость + Замедление II
+commands.pfi.info.overdose3=Уровень III: Тошнота, Замедление III, Слабость II
+commands.pfi.info.overdose4=Уровень IV: Мгновенная, и перманентная смерть.
+
+# ==========================================
+# Конфигурация (ModConfig)
+# ==========================================
 config.pills_for_illness.title=Настройки Pills for Illness
-config.pills_for_illness.virus=Настройки Вируса
+config.pills_for_illness.general=Общие настройки
+config.pills_for_illness.general.systemMode=Режим работы системы
+config.pills_for_illness.general.systemMode.tooltip=ALWAYS_ON - включено всегда, ASK - с тумблером при создании мира.
+
+config.pills_for_illness.virus=Настройки вируса
 config.pills_for_illness.virus.resetOnDeath=Сбрасывать вирус при смерти
-config.pills_for_illness.virus.deathDamage=Урон от вируса
+config.pills_for_illness.virus.deathDamage=Урон от смертельной стадии
 config.pills_for_illness.virus.thresholds=Пороги стадий вируса (в тиках)
 
-config.pills_for_illness.overdose=Настройки Передозировки
+config.pills_for_illness.overdose=Настройки передозировки
 config.pills_for_illness.overdose.enable=Включить передозировку
 config.pills_for_illness.overdose.maxLevel=Максимальный уровень передозировки
-config.pills_for_illness.overdose.deathDamage=Урон от передозировки
-config.pills_for_illness.overdose.durations=Длительности передозировки по уровням
-config.pills_for_illness.overdose.deathChances=Шансы смерти при передозировке
+config.pills_for_illness.overdose.deathDamage=Урон при летальной передозировке
+config.pills_for_illness.overdose.durations=Длительность уровней (в тиках)
+config.pills_for_illness.overdose.deathChances=Шансы смерти при эффекте
 
-config.pills_for_illness.pill=Настройки Таблеток
-config.pills_for_illness.pill.healAmount=Снятие тиков обычной таблеткой
-config.pills_for_illness.pill.bufferedHealAmount=Снятие тиков нейтрализованной таблеткой
+config.pills_for_illness.pill=Настройки таблеток
+config.pills_for_illness.pill.healAmount=Лечение обычной таблеткой (в тиках)
+config.pills_for_illness.pill.bufferedHealAmount=Лечение буферизованной таблеткой (в тиках)
+config.pills_for_illness.pill.pillCooldown=Перезарядка обычной таблетки
+config.pills_for_illness.pill.bufferedPillCooldown=Перезарядка буферизованной таблетки
 
-config.pills_for_illness.permadeath=Настройки Пермадеса
-config.pills_for_illness.permadeath.enable=Включить персистентную смерть
+config.pills_for_illness.monitor=Настройки медицинского монитора
+config.pills_for_illness.monitor.enable=Включить монитор
+config.pills_for_illness.monitor.cooldown=Задержка использования монитора
+config.pills_for_illness.monitor.dropDamage=Урон при выпадении монитора
+config.pills_for_illness.monitor.useDamage=Урон при использовании монитора
 
-config.pills_for_illness.drop=Настройки Выпадения Дропа
-config.pills_for_illness.drop.neutralizerChance1=Шанс выпадения 1 нейтрализатора (0.05 = 5%%)
-config.pills_for_illness.drop.neutralizerChance2=Шанс выпадения 2 нейтрализаторов (0.02 = 2%%)
-config.pills_for_illness.drop.cancelCobblestone=Отменять выпадение булыжника
-config.pills_for_illness.drop.powderChance=Шанс выпадения порошка с железной руды (0.50 = 50%%)
+config.pills_for_illness.permadeath=Настройки перманентной смерти
+config.pills_for_illness.permadeath.enable=Включить перманентную смерть (режим наблюдателя)
+
+config.pills_for_illness.drop=Настройки дропа
+config.pills_for_illness.drop.neutralizerChance1=Шанс выпадения 1 нейтрализатора из камня
+config.pills_for_illness.drop.neutralizerChance2=Шанс выпадения 2 нейтрализаторов из камня
+config.pills_for_illness.drop.cancelCobblestone=Заменять булыжник при дропе нейтрализатора
+config.pills_for_illness.drop.powderChance=Шанс порошка из естественной железной руды
+config.pills_for_illness.drop.guaranteeCarrotDrop=Гарантировать морковь с зомби при старте
